@@ -1,0 +1,23 @@
+-- 0069 · The supporting document, checked on the server
+--
+-- QA reported that the mandatory upload before submitting a request for payment
+-- existed only in the browser. That was right: foundation.js refused to save
+-- without a file, and POST /payment-requests/:id/action never looked. Anything
+-- posting to the API directly walked straight past it.
+--
+-- The check now lives in the SUBMIT branch of src/routes/finance.js. Submit,
+-- not create, because a request raised automatically when a purchase order
+-- completes its chain is a draft with nothing attached yet, and refusing that
+-- would break the auto-raise the PO chain depends on. A draft may be empty; a
+-- request that asks somebody to sign may not.
+--
+-- Shipped OFF. Eight end-to-end flows submit requests without a document, which
+-- means real people almost certainly do too, and switching a new refusal on
+-- across a live register of 356 requests without warning is how a control
+-- becomes something people work around. Turn it on when Finance are ready:
+--
+--   UPDATE erp_rfp_settings SET value='1' WHERE key='rfp_require_document';
+--
+-- and off again the same way.
+
+INSERT OR IGNORE INTO erp_rfp_settings(key,value) VALUES ('rfp_require_document','0');
