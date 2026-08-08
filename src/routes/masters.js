@@ -73,7 +73,13 @@ masterRoutes.post('/partners/:id/credit', requirePermission('CUSTOMERS','APPROVE
 
 
 masterRoutes.get('/accredited-vendors', requireAnyPermission(['FINANCE','PROCUREMENT','ADMIN'],'VIEW'), async (c) => {
-  const rows = await all(c.env.DB, `SELECT partner_code,vendor_name,status FROM erp_vendor_accreditation ORDER BY vendor_name`);
+  /*
+   * Accredited means accredited. The list was returning every row whatever its
+   * status, so a vendor still going through accreditation, or one that had been
+   * refused, appeared in the dropdown beside the ones that had passed.
+   */
+  const rows = await all(c.env.DB, `SELECT partner_code,vendor_name,status FROM erp_vendor_accreditation
+     WHERE UPPER(COALESCE(status,''))IN('ACCREDITED','APPROVED','ACTIVE') ORDER BY vendor_name`);
   return ok(c,{rows});
 });
 

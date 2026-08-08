@@ -55,7 +55,13 @@ requisitionRoutes.get('/lookups', requirePermission('REQUISITIONS','VIEW'), asyn
 
 requisitionRoutes.get('/outbound-workbench', requirePermission('REQUISITIONS','VIEW'), async c => {
   const [requisitions,allocations,deliveries,checks,returns,documentFlow]=await Promise.all([
+    /*
+     * source_order_id / source_order_no are what the screen uses to hide a sales
+     * order that has already been requisitioned. They were never selected, so
+     * the filter read undefined on every row and hid nothing.
+     */
     all(c.env.DB,`SELECT r.*,rc.request_type,rc.holder_type,rc.holder_name,rc.expected_return_date,
+      rc.source_order_id,rc.source_order_no,
       (SELECT COUNT(*) FROM erp_requisition_allocations ra WHERE ra.requisition_id=r.id AND ra.asset_id IS NOT NULL) serial_count,
       (SELECT SUM(ra.quantity) FROM erp_requisition_allocations ra WHERE ra.requisition_id=r.id) total_qty
       FROM erp_requisitions r LEFT JOIN erp_requisition_context rc ON rc.requisition_id=r.id

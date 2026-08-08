@@ -1580,6 +1580,24 @@ financeRoutes.post('/payment-requests/:id/action', requirePermission('FINANCE','
     if(action==='SUBMIT'){
       // A returned request goes back to the requestor and is resubmitted from here.
       if(!['DRAFT','RETURNED'].includes(request.status))throw new Error('Only a draft or returned request can be submitted.');
+      /*
+       * The paperwork is part of the request, and this is the moment it stops
+       * being a draft and starts asking somebody to sign.
+       *
+       * The browser already refused, but a control that exists only in the
+       * browser is not a control: anything posting to this endpoint walked
+       * straight past it. Checked here rather than at creation, because a
+       * request raised automatically from a completed purchase order is a
+       * draft with nothing attached yet, and blocking that would break the
+       * auto-raise the PO chain depends on.
+       */
+      if(await rfpFlag(c.env.DB,'rfp_require_document','0')){
+        const files=await first(c.env.DB,`SELECT COUNT(*) n FROM erp_attachments
+           WHERE record_type='PAYMENT_REQUEST' AND record_id=? AND active=1`,[id]).catch(()=>null);
+        if(!Number(files?.n||0))
+          throw new Error('Attach the billing, invoice or supporting document before submitting '
+            +'this request for payment.');
+      }
       await run(c.env.DB,`UPDATE erp_payment_requests SET status='SUBMITTED',updated_at=datetime('now') WHERE id=?`,[id]);
     }else if(action==='DEPARTMENT_APPROVE'){
       if(request.status!=='SUBMITTED')throw new Error('Request is not awaiting department approval.');
