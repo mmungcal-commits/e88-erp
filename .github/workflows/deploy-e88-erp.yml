@@ -150,6 +150,7 @@ jobs:
           npx wrangler d1 execute DB --remote --file=migrations/0066_mnc_dispatch.sql
           npx wrangler d1 execute DB --remote --file=migrations/0067_rfp_document_links.sql
           npx wrangler d1 execute DB --remote --file=migrations/0068_finance_check_is_rucels.sql
+          npx wrangler d1 execute DB --remote --file=migrations/0069_rfp_document_on_submit.sql
           # 0065 must stay last: it re-applies operator deletions after every
           # seed above has had its chance to put the rows back.
           npx wrangler d1 execute DB --remote --file=migrations/0065_operator_deletions_stick.sql
